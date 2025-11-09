@@ -246,7 +246,7 @@ def delete_account(request):
         if account.status == 'creating':
             return JsonResponse({
                 'success': False,
-                'message': '账号正在创建中，无法删除'
+                'message': '账号正在创建中，无法删除，请等待创建完成或者超时（10min）后再进行删除'
             })
         
         # 标记为删除中状态

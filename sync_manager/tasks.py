@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=1)
 def create_openvpn_account(self, user_id, username, password, expires_days=30, **kwargs):
     """
     创建 OpenVPN 账号的 Celery 任务
@@ -97,11 +97,12 @@ def create_openvpn_account(self, user_id, username, password, expires_days=30, *
             account.status = 'failed'
             account.error_message = str(exc)
             account.save()
-        except:
+        except Exception as exc:
+            logger.error(f'Failed to update account status for user {user_id} after creation error: {str(exc)}')
             pass
         
         # 重试任务
-        raise self.retry(exc=exc, countdown=60)
+        # raise self.retry(exc=exc, countdown=60)
 
 
 @shared_task
@@ -111,7 +112,7 @@ def sync_openvpn_accounts():
     """
     from sync_manager.models import OpenVPNAccount
     from django.conf import settings
-    
+    MIDDLE_STATE = ['creating', 'deleting']
     try:
         ikuai_config = getattr(settings, 'IKUAI_CONFIG', {})
         base_url = ikuai_config.get('base_url', 'http://192.168.1.1')
@@ -138,6 +139,11 @@ def sync_openvpn_accounts():
                     logger.warning(f'Account {account.username} not found in iKuai')
             except Exception as e:
                 logger.error(f'Error syncing account {account.username}: {str(e)}')
+                # 如果创建时间超时1小时，则标记为失败
+                if account.status in MIDDLE_STATE and timezone.now() - account.created_at > timedelta(hours=1):
+                    account.status = 'failed'
+                    account.error_message = '操作超时,请手动重试。'
+                    account.save()
                 continue
         
         logger.info(f'Successfully synced {synced_count} OpenVPN accounts')
@@ -192,7 +198,11 @@ def delete_openvpn_account(self, account_id):
         except OpenVPNAccount.DoesNotExist:
             logger.warning(f'Account {account_id} does not exist in database')
             return {'status': 'already_deleted', 'message': 'Account not found in database'}
-        
+        if account.status == 'deleting':
+            # 可能被用户二次触发删除了
+            logger.info(f'Account {account_id} is already being deleted')
+            return {'status': 'already_deleting', 'message': 'Account is already being deleted'}
+
         # 更新状态为删除中
         account.status = 'deleting'
         account.task_id = self.request.id
@@ -243,6 +253,9 @@ def delete_openvpn_account(self, account_id):
     except OpenVPNAccount.DoesNotExist:
         # 账号已经被删除
         logger.info(f'Account {account_id} already deleted')
+        account = OpenVPNAccount.objects.filter(id=account_id).first()
+        if account:
+            account.delete()
         return {'status': 'already_deleted'}
     
     except Exception as exc:
