@@ -13,11 +13,18 @@ cp .env.example .env
 编辑 `.env` 文件，修改以下关键配置：
 
 - `DJANGO_SECRET_KEY`: Django 密钥（生产环境必须修改）
+- `DJANGO_ENV`: 环境类型（dev/prod）
+- `ENABLE_SSL`: 是否启用 HTTPS 重定向（默认 false，仅在配置了 SSL 证书时设置为 true）
 - `DB_PASSWORD`: MySQL 数据库密码
 - `REDIS_PASSWORD`: Redis 密码
 - `IKUAI_BASE_URL`, `IKUAI_USERNAME`, `IKUAI_PASSWORD`: iKuai 路由器配置
 - `OPENVPN_SERVER_HOST`: OpenVPN 服务器地址
 - `DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD`: 管理员账号
+
+**重要提示**：
+- 生产环境请设置 `DJANGO_ENV=prod`
+- 如果没有配置 SSL 证书或反向代理，请保持 `ENABLE_SSL=false`，否则会导致强制跳转 HTTPS
+- 生产环境使用 gunicorn 作为 WSGI 服务器，性能更好且更稳定
 
 ### 2. 构建和启动服务
 
