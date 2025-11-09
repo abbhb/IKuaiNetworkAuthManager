@@ -309,18 +309,18 @@ class OpenVPNAccount(models.Model):
         self.cardid = data.get('cardid', '')
         self.auto_mac = data.get('auto_mac', 1)
         
-        # 时间字段（Unix时间戳转换）
+        # 时间字段（Unix时间戳转换为timezone-aware datetime）
         if data.get('start_time'):
-            self.start_time = datetime.fromtimestamp(data['start_time'])
+            self.start_time = datetime.fromtimestamp(data['start_time'], tz=timezone.get_current_timezone())
         
         if data.get('expires'):
-            self.expires = datetime.fromtimestamp(data['expires'])
+            self.expires = datetime.fromtimestamp(data['expires'], tz=timezone.get_current_timezone())
         
         if data.get('last_conntime'):
-            self.last_conntime = datetime.fromtimestamp(data['last_conntime'])
+            self.last_conntime = datetime.fromtimestamp(data['last_conntime'], tz=timezone.get_current_timezone())
         
         if data.get('last_offtime'):
-            self.last_offtime = datetime.fromtimestamp(data['last_offtime'])
+            self.last_offtime = datetime.fromtimestamp(data['last_offtime'], tz=timezone.get_current_timezone())
         
         # 更新状态
         if self.is_expired():

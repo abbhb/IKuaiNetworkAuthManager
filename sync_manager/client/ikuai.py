@@ -8,6 +8,7 @@ import urllib3
 from cachetools import TTLCache
 from cachetools import cached
 import logging
+from django.utils import timezone as django_timezone
 
 logger = logging.getLogger(__name__)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -52,7 +53,7 @@ class AddPPPUserRequestData(BaseModel):
     enabled: str = Field(default="yes", description="启用状态：yes 或 no")
     
     # 时间相关字段（Unix 时间戳）
-    start_time: int = Field(description="开始时间（Unix 时间戳）", default_factory=lambda: int(datetime.now().timestamp()))
+    start_time: int = Field(description="开始时间（Unix 时间戳）", default_factory=lambda: int(django_timezone.now().timestamp()))
     expires: int = Field(default=0, description="过期时间（Unix 时间戳），0为不过期")
     create_time: str = Field(default="", description="创建时间")
     
@@ -128,7 +129,7 @@ class EditPPPUserRequestData(BaseModel):
     username: str = Field(description="用户名")
     passwd: str = Field(description="密码")
     expires: int = Field(description="过期时间（Unix 时间戳），0为不过期",default=0)
-    start_time: int = Field(description="开始时间（Unix 时间戳）",default_factory=lambda: int(datetime.now().timestamp()))
+    start_time: int = Field(description="开始时间（Unix 时间戳）",default_factory=lambda: int(django_timezone.now().timestamp()))
     
     # 启用状态
     enabled: str = Field(default="yes", description="启用状态：yes 或 no")
@@ -226,8 +227,8 @@ class IKuaiAPIClient:
         if not self.login():
             raise Exception('Failed to login to iKuai')
         
-        now = int(datetime.now().timestamp())
-        expires = int((datetime.now() + timedelta(days=expires_days)).timestamp()) if expires_days > 0 else 0
+        now = int(django_timezone.now().timestamp())
+        expires = int((django_timezone.now() + timedelta(days=expires_days)).timestamp()) if expires_days > 0 else 0
         
         # 使用 Pydantic 模型构建数据
         request_data = AddPPPUserRequestData(
