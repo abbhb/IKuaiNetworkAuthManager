@@ -326,16 +326,16 @@ class IKuaiAPIClient:
             _index = 0
             _end_index = 100
             all_accounts = []
+            total = 0  # Initialize total before the loop
             while True:
-                if _index+1 > total:
-                    break
                 accounts, total = self._list_accounts(_index,_end_index)
-                if not accounts:
-                    break
-                all_accounts.extend(accounts)
-                
-                _index += _end_index+1
+                if accounts:
+                    all_accounts.extend(accounts)
+                _index += _end_index + 1
                 _end_index = _index + 100
+                if _index + 1 > total:
+                    # 下一轮索引超出总数，结束循环
+                    break
             return all_accounts
         except Exception as e:
             logger.error(f'Error listing accounts: {str(e)}')
