@@ -58,6 +58,9 @@ ENV PYTHONUNBUFFERED=1 \
 RUN mkdir -p /var/log/supervisor && \
     chmod -R 755 /var/log/supervisor
 
+RUN mkdir -p /var/log/django && \
+    chmod -R 755 /var/log/django
+
 # Copy supervisor configuration
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 

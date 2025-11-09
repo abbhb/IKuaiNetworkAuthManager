@@ -12,10 +12,9 @@ services:
     env_file:
       - .env
     volumes:
-      - ./:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - logs_volume:/var/log/supervisor
+      - logs_volume:/var/log
     ports:
       - "23800:8000"
     networks:
