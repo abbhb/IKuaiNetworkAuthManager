@@ -1,0 +1,64 @@
+version: '3'
+
+vars:
+  # 你可以通过命令行参数来控制启动的模块
+  ENV: "dev"
+
+env:
+  # 启动必须环境变量
+  IS_LOCAL: "true"
+
+tasks:
+  clean:
+    cmds:
+      - echo "cleaning"
+      # put some cleaning commands here
+  
+  # 安装依赖
+  install:
+    cmds:
+      - uv sync --all-extras
+  
+  # 你可以通过命令行参数来控制启动的模块
+  # e.g. task run-klc
+  run-*:
+    vars:
+      ENV: '{{index .MATCH 0}}'
+    dotenv: [".env.{{ .ENV }}"]
+    cmds: 
+      - task: clean
+        silent: true
+      - python manage.py runserver 0.0.0.0:8010
+  
+  # 你可以通过命令行参数来控制启动的模块
+  # e.g. task run-klc
+  shell-*:
+    vars:
+      ENV: '{{index .MATCH 0}}'
+    dotenv: [".env.{{ .ENV }}"]
+    cmds: 
+      - task: clean
+        silent: true
+      - python manage.py shell
+
+  migrate-*:
+    vars:
+      ENV: '{{index .MATCH 0}}'
+    dotenv: [".env.{{ .ENV }}"]
+    cmds: 
+      - python manage.py migrate
+  
+  makemigrations-*:
+    vars:
+      ENV: '{{index .MATCH 0}}'
+    dotenv: [".env.{{ .ENV }}"]
+    cmds: 
+      - python manage.py makemigrations
+  
+  exec-*-*:
+    vars:
+      ENV: '{{index .MATCH 0}}'
+      SUB_COMMAND: '{{index .MATCH 1}}'
+    dotenv: [".env.{{ .ENV }}"]
+    cmds:
+      - python manage.py {{ .SUB_COMMAND }}

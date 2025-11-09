@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+
+  # Django + Celery 应用
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: network_manager_web
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+      - logs_volume:/var/log/supervisor
+    ports:
+      - "23800:8000"
+    networks:
+      - network_manager_net
+
+
+volumes:
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+  logs_volume:
+    driver: local
+
+networks:
+  network_manager_net:
+    driver: bridge
