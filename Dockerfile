@@ -11,18 +11,11 @@ ENV PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy
 
 # Copy dependency files
-COPY pyproject.toml ./
+COPY . .
 
 # Install dependencies using uv
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project --no-dev
-
-# Copy application code
-COPY . .
-
-# Install the project
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --all-extras
 
 # Final stage
 FROM python:3.11-slim-bookworm
