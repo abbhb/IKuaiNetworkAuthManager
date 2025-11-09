@@ -120,6 +120,11 @@
         }
 
         .status-creating {
+            background: #86e87dc2;
+            color: var(--warning-yellow);
+        }
+
+        .status-deleting {
             background: #fef3c7;
             color: var(--warning-yellow);
         }
@@ -435,7 +440,7 @@
                 <div class="alert alert-danger">
                     <span>❌</span>
                     <div>
-                        <div>账号创建失败</div>
+                        <div>异步操作失败</div>
                         <div style="font-size: 0.875rem; margin-top: 0.25rem;">{{ account.error_message }}</div>
                     </div>
                 </div>
@@ -454,6 +459,11 @@
                     <span>✅</span>
                     <span>账号运行正常</span>
                 </div>
+                {% elif account.status == 'deleting' %}
+                <div class="alert alert-info">
+                    <span>🗑️</span>
+                    <span>账号正在删除中，请稍等片刻...</span>
+                </div>
                 {% endif %}
 
                 <div class="info-grid">
@@ -469,6 +479,8 @@
                                     <span>●</span> 已过期
                                 {% elif account.status == 'failed' %}
                                     <span>●</span> 创建失败
+                                {% elif account.status == 'deleting' %}
+                                    <span>●</span> 删除中
                                 {% elif account.status == 'disabled' %}
                                     <span>●</span> 已禁用
                                 {% endif %}
@@ -805,7 +817,7 @@
                     const response = await fetch('{% url "sync_manager:account_status" %}');
                     const data = await response.json();
 
-                    if (data.success && data.status !== 'creating') {
+                    if (data.success && data.status !== 'creating' && data.status !== 'deleting') {
                         clearInterval(pollingInterval);
                         location.reload();
                     }
@@ -841,6 +853,8 @@
 
         // Auto-poll if status is creating
         {% if account.status == 'creating' %}
+        startPolling();
+        {% elif account.status == 'deleting' %}
         startPolling();
         {% endif %}
     </script>
