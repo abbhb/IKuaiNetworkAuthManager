@@ -397,7 +397,7 @@ class IKuaiAPIClient:
                 raise Exception(error_msg)
         except Exception as e:
             logger.error(f'Error deleting account {account_id}: {str(e)}')
-            raise
+            raise e
 
     def md5_hex(self, s: str) -> str:
         return hashlib.md5(s.encode("utf-8")).hexdigest()

@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 
+from account.models import UserProfile
+
 from .models import OpenVPNAccount
 from .tasks import create_openvpn_account, delete_openvpn_account
 
@@ -64,12 +66,14 @@ def create_account(request):
         # 使用数据库密码，如果没有则生成随机密码
         import secrets
         import string
-        password = request.user.password
-        if not password:
+        user_profile = UserProfile.objects.get(user=request.user)
+        if (not user_profile) or (not user_profile.plain_password):
             # 生成8位随机密码
             alphabet = string.ascii_letters + string.digits
             password = ''.join(secrets.choice(alphabet) for i in range(8))
-        
+        else:
+            password = user_profile.plain_password
+
         # 获取有效期（默认30天）
         expires_days = int(request.POST.get('expires_days', 30))
         

@@ -230,20 +230,23 @@ def delete_openvpn_account(self, account_id):
                         # 账号仍然存在，删除失败
                         raise ikuai_error
                 except Exception as check_error:
-                    # 如果检查也失败，记录错误但仍然尝试删除本地记录
+                    # 如果检查也失败，抛异常并且打印日志
                     logger.error(f'Error checking account existence in iKuai: {str(check_error)}')
                     logger.warning(f'Proceeding with local deletion for account {account.username}')
+                    raise check_error
+
         
         # 删除本地数据库记录
         username = account.username
         user_id = account.user.id if account.user else None
         account.delete()
         
-        logger.info(f'Successfully deleted local account record for {username} (user_id: {user_id})')
+        logger.info(f'Successfully deleted local account record for {username} (ikuai_id: {account.ikuai_id})')
         return {
             'status': 'success',
             'username': username,
             'user_id': user_id,
+            'ikuai_id': account.ikuai_id,
         }
     
     except OpenVPNAccount.DoesNotExist:
