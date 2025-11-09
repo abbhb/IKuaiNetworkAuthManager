@@ -25,6 +25,14 @@ SECURE_HSTS_SECONDS = 31536000 if SECURE_SSL_REDIRECT else 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_SSL_REDIRECT
 SECURE_HSTS_PRELOAD = SECURE_SSL_REDIRECT
 
+# Proxy settings - trust X-Forwarded-* headers from nginx
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CSRF settings for reverse proxy
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://vpn.example.top').split(',')
+
 # Production logging
 LOGGING = {
     'version': 1,
