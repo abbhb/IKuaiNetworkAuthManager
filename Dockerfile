@@ -19,7 +19,7 @@ RUN sed -i "s/deb.debian.org/${APT_MIRROR}/g" /etc/apt/sources.list && \
 # 缓存 apt-get 下载的包，提升构建速度 apt需要锁定缓存
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y gcc ssh default-libmysqlclient-dev pkg-config vim git gettext libjpeg-dev zlib1g-dev wget
+  apt-get update && apt-get install -y gcc ssh default-libmysqlclient-dev pkg-config vim git gettext libjpeg-dev zlib1g-dev wget libldap2-dev libsasl2-dev
 
 #RUN mkdir ~/.pip && printf '[global]\nindex-url = ${PIP_INDEX_URL}\n' > ~/.pip/pip.conf
 
