@@ -16,6 +16,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-4)b1vxpv(=c$zwmw8f+&g(n!@3qg(azyrl!lm*e-!xt9)#=q##')
 
+# Field encryption key for django-encrypted-model-fields
+# IMPORTANT: In production, use a different key from SECRET_KEY and store it securely
+FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', SECRET_KEY)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

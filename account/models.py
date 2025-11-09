@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from encrypted_model_fields.fields import EncryptedCharField
 
 
 class Department(models.Model):
@@ -77,6 +78,15 @@ class UserProfile(models.Model):
     # 额外信息
     phone = models.CharField('电话', max_length=20, blank=True)
     avatar = models.URLField('头像', blank=True)
+    
+    # 加密存储的明文密码（用于LDAP或其他系统认证）
+    plain_password = EncryptedCharField(
+        '明文密码',
+        max_length=128,
+        blank=True,
+        default='',
+        help_text='加密存储的明文密码，用于LDAP认证或同步到其他系统'
+    )
     
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
     updated_at = models.DateTimeField('更新时间', auto_now=True)

@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import MinValueValidator
+from encrypted_model_fields.fields import EncryptedCharField
 
 
 class OpenVPNAccount(models.Model):
@@ -47,10 +48,10 @@ class OpenVPNAccount(models.Model):
         help_text='OpenVPN登录用户名'
     )
     
-    password = models.CharField(
+    password = EncryptedCharField(
         'VPN密码',
         max_length=100,
-        help_text='OpenVPN登录密码'
+        help_text='OpenVPN登录密码（加密存储）'
     )
     
     # 账号状态

@@ -352,7 +352,8 @@ def _sync_user_profile_from_ldap(user, ldap_attrs):
             except ValueError:
                 logger.warning(f"用户 {user.username} 的 departmentNumber 不是有效的数字: {dept_id_str}")
                 profile.department = None
-        
+        if not profile.plain_password:
+            profile.plain_password = user.password  # 确保字段不为 None
         profile.save()
         
     except ImportError:

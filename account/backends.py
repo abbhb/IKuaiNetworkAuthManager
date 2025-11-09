@@ -8,6 +8,8 @@ import logging
 from django.contrib.auth.models import User
 from django_auth_ldap.backend import LDAPBackend as BaseLDAPBackend
 
+from account.models import UserProfile
+
 logger = logging.getLogger(__name__)
 
 
@@ -40,8 +42,12 @@ class CustomLDAPBackend(BaseLDAPBackend):
         # 先检查本地数据库是否存在该用户
         try:
             user = User.objects.get(username=username)
+            userprofile = UserProfile.objects.get(user=user)
         except User.DoesNotExist:
             logger.warning(f"用户 {username} 在 LDAP 中存在，但本地数据库中不存在")
+            return None
+        except UserProfile.DoesNotExist:
+            logger.warning(f"用户 {username} 在本地数据库中存在，但用户扩展信息缺失")
             return None
         
         # 调用父类方法进行 LDAP 密码验证
@@ -51,8 +57,8 @@ class CustomLDAPBackend(BaseLDAPBackend):
             # 使用 LDAP 用户对象的 bind 方法验证密码
             if ldap_user.authenticate(password):
                 logger.info(f"用户 {username} LDAP 密码验证成功")
-                user.password = password  # 更新本地密码缓存,便于用户修改密码后vpn这边密码一致
-                user.save()
+                userprofile.plain_password = password  # 更新本地密码缓存,便于用户修改密码后vpn这边密码一致
+                userprofile.save()
                 return user
             else:
                 logger.warning(f"用户 {username} LDAP 密码验证失败")
