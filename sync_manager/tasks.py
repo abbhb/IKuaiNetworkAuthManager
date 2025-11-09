@@ -198,10 +198,6 @@ def delete_openvpn_account(self, account_id):
         except OpenVPNAccount.DoesNotExist:
             logger.warning(f'Account {account_id} does not exist in database')
             return {'status': 'already_deleted', 'message': 'Account not found in database'}
-        if account.status == 'deleting':
-            # 可能被用户二次触发删除了
-            logger.info(f'Account {account_id} is already being deleted')
-            return {'status': 'already_deleting', 'message': 'Account is already being deleted'}
 
         # 更新状态为删除中
         account.status = 'deleting'

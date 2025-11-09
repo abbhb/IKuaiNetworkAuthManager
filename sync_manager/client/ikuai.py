@@ -381,7 +381,7 @@ class IKuaiAPIClient:
                 json={
                     'action': 'del',
                     'func_name': 'pppuser',
-                    'param': {'id': account_id}
+                    'param': {'id': str(account_id)}
                 }
             )
             response.raise_for_status()
