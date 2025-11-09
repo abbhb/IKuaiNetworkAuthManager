@@ -171,7 +171,7 @@ def download_config(request):
         
         # 返回文件
         response = HttpResponse(config_content, content_type='application/x-openvpn-profile')
-        response['Content-Disposition'] = f'attachment; filename="{account.username}.ovpn"'
+        response['Content-Disposition'] = f'attachment; filename="OpenVPN-Client-{account.username}.ovpn"'
         
         return response
     
