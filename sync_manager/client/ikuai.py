@@ -380,7 +380,7 @@ class IKuaiAPIClient:
                 f'{self.base_url}/Action/call',
                 json={
                     'action': 'del',
-                    'func_name': 'pptp_user',
+                    'func_name': 'pppuser',
                     'param': {'id': account_id}
                 }
             )

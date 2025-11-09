@@ -173,3 +173,92 @@ def check_expired_accounts():
         logger.error(f'Error checking expired accounts: {str(e)}')
         raise
 
+
+@shared_task(bind=True, max_retries=3)
+def delete_openvpn_account(self, account_id):
+    """
+    删除 OpenVPN 账号的 Celery 任务
+    
+    Args:
+        account_id: OpenVPNAccount ID
+    """
+    from sync_manager.models import OpenVPNAccount
+    from django.conf import settings
+    
+    try:
+        # 获取账号记录
+        try:
+            account = OpenVPNAccount.objects.get(id=account_id)
+        except OpenVPNAccount.DoesNotExist:
+            logger.warning(f'Account {account_id} does not exist in database')
+            return {'status': 'already_deleted', 'message': 'Account not found in database'}
+        
+        # 更新状态为删除中
+        account.status = 'deleting'
+        account.task_id = self.request.id
+        account.error_message = ''
+        account.save()
+        
+        # 获取 iKuai 配置
+        ikuai_config = getattr(settings, 'IKUAI_CONFIG', {})
+        base_url = ikuai_config.get('base_url', 'http://192.168.1.1')
+        admin_user = ikuai_config.get('username', 'admin')
+        admin_pass = ikuai_config.get('password', 'admin')
+        
+        # 创建 API 客户端
+        client = IKuaiAPIClient(base_url, admin_user, admin_pass)
+        
+        # 如果有 iKuai ID，尝试从 iKuai 删除账号
+        if account.ikuai_id:
+            try:
+                client.delete_account(account.ikuai_id)
+                logger.info(f'Successfully deleted account {account.username} (ID: {account.ikuai_id}) from iKuai')
+            except Exception as ikuai_error:
+                # 容错处理：检查账号是否已经在 iKuai 中不存在了
+                try:
+                    ikuai_account = client.get_account(account.username)
+                    if ikuai_account is None:
+                        # 账号在 iKuai 中已经不存在，视为已删除
+                        logger.info(f'Account {account.username} does not exist in iKuai, treating as deleted')
+                    else:
+                        # 账号仍然存在，删除失败
+                        raise ikuai_error
+                except Exception as check_error:
+                    # 如果检查也失败，记录错误但仍然尝试删除本地记录
+                    logger.error(f'Error checking account existence in iKuai: {str(check_error)}')
+                    logger.warning(f'Proceeding with local deletion for account {account.username}')
+        
+        # 删除本地数据库记录
+        username = account.username
+        user_id = account.user.id if account.user else None
+        account.delete()
+        
+        logger.info(f'Successfully deleted local account record for {username} (user_id: {user_id})')
+        return {
+            'status': 'success',
+            'username': username,
+            'user_id': user_id,
+        }
+    
+    except OpenVPNAccount.DoesNotExist:
+        # 账号已经被删除
+        logger.info(f'Account {account_id} already deleted')
+        return {'status': 'already_deleted'}
+    
+    except Exception as exc:
+        logger.error(f'Error deleting OpenVPN account {account_id}: {str(exc)}')
+        
+        # 更新账号状态为失败
+        try:
+            account = OpenVPNAccount.objects.get(id=account_id)
+            account.status = 'failed'
+            account.error_message = f'删除失败: {str(exc)}'
+            account.save()
+        except Exception as exc:
+            logger.error(f'Failed to update account status for {account_id} after deletion error: {str(exc)}')
+            pass
+        
+        # 重试任务
+        raise self.retry(exc=exc, countdown=60)
+
+

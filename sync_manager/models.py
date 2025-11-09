@@ -20,6 +20,7 @@ class OpenVPNAccount(models.Model):
         ('expired', '已过期'),
         ('disabled', '已禁用'),
         ('failed', '创建失败'),
+        ('deleting', '删除中'),
     ]
     
     # 与系统用户一对一关系

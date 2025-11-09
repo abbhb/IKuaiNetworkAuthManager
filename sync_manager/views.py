@@ -14,7 +14,7 @@ from django.conf import settings
 import json
 
 from .models import OpenVPNAccount
-from .tasks import create_openvpn_account
+from .tasks import create_openvpn_account, delete_openvpn_account
 
 
 def openvpn_dashboard(request):
@@ -231,24 +231,45 @@ def renew_account(request):
 @require_http_methods(["POST"])
 def delete_account(request):
     """
-    删除账号
+    删除账号（异步执行）
     """
     try:
         account = OpenVPNAccount.objects.get(user=request.user)
         
-        # TODO: 调用 iKuai API 删除账号
+        # 检查账号状态
+        if account.status == 'deleting':
+            return JsonResponse({
+                'success': False,
+                'message': '账号正在删除中，请稍后刷新页面查看'
+            })
         
-        account.delete()
+        if account.status == 'creating':
+            return JsonResponse({
+                'success': False,
+                'message': '账号正在创建中，无法删除'
+            })
+        
+        # 标记为删除中状态
+        account.status = 'deleting'
+        account.error_message = ''
+        account.save()
+        
+        # 异步执行删除任务
+        task = delete_openvpn_account.delay(account.id)
+        
+        account.task_id = task.id
+        account.save()
         
         return JsonResponse({
             'success': True,
-            'message': '账号已删除'
+            'message': '账号删除请求已提交，请稍后刷新页面查看',
+            'task_id': task.id,
         })
     
     except OpenVPNAccount.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': '账号不存在'
+            'message': '账号不存在,可能已经删除了，请刷新页面验证'
         }, status=404)
     except Exception as e:
         return JsonResponse({
